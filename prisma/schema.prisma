@@ -1,0 +1,45 @@
+// MikeyX Prisma Schema
+// Phase 1: Initial User model
+// Full schema with all models will be built in Phase 5
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USER MODEL ────────────────────────────────────────────
+// Core user model for authentication and profile
+// Extended in Phase 5 with relations to Progress, Submissions, etc.
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?   // null for OAuth users
+  image         String?
+  role          Role      @default(USER)
+  provider      String?   // "google", "github", or null for credentials
+  emailVerified DateTime?
+
+  // Gamification
+  xp            Int       @default(0)
+  level         Int       @default(1)
+  streak        Int       @default(0)
+  lastActiveAt  DateTime?
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
