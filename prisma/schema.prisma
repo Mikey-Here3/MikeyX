@@ -1,6 +1,13 @@
-// MikeyX Prisma Schema
-// Phase 1: Initial User model
-// Full schema with all models will be built in Phase 5
+// ═══════════════════════════════════════════════════════════════
+// MikeyX — Complete Database Schema
+// Phase 2: Full data model for the learning platform
+//
+// Models: User, Module, Topic, Lesson, LessonBlock, Quiz,
+//         QuizQuestion, QuizOption, QuizAttempt, Challenge,
+//         ChallengeSubmission, Progress, Achievement,
+//         UserAchievement, UserStreak, Bookmark, Note,
+//         ModulePrerequisite
+// ═══════════════════════════════════════════════════════════════
 
 generator client {
   provider = "prisma-client-js"
@@ -12,9 +19,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── USER MODEL ────────────────────────────────────────────
-// Core user model for authentication and profile
-// Extended in Phase 5 with relations to Progress, Submissions, etc.
+// ─── ENUMS ─────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum TopicStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonBlockType {
+  TEXT
+  CODE
+  IMAGE
+  VIDEO
+  CALLOUT
+  EXERCISE
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  CODE_OUTPUT
+}
+
+enum SubmissionStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  MASTERED
+}
+
+enum AchievementCategory {
+  STREAK
+  COMPLETION
+  MASTERY
+  SOCIAL
+  SPECIAL
+}
+
+// ─── USER ──────────────────────────────────────────────────────
+// Core user model for authentication, profile, and gamification.
+// Related to nearly every other model.
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -24,6 +89,7 @@ model User {
   role          Role      @default(USER)
   provider      String?   // "google", "github", or null for credentials
   emailVerified DateTime?
+  bio           String?
 
   // Gamification
   xp            Int       @default(0)
@@ -35,11 +101,420 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Relations
+  progress             Progress[]
+  quizAttempts         QuizAttempt[]
+  challengeSubmissions ChallengeSubmission[]
+  achievements         UserAchievement[]
+  streaks              UserStreak[]
+  bookmarks            Bookmark[]
+  notes                Note[]
+
   @@map("users")
 }
 
-enum Role {
-  USER
-  ADMIN
-  MODERATOR
+// ─── MODULE ────────────────────────────────────────────────────
+// Top-level learning unit (e.g., "Python Fundamentals").
+// Contains ordered topics.
+
+model Module {
+  id          String     @id @default(cuid())
+  slug        String     @unique // URL-friendly: "python-fundamentals"
+  title       String
+  description String
+  icon        String?    // Lucide icon name
+  color       String?    // Hex color for UI cards
+  difficulty  Difficulty @default(BEGINNER)
+  order       Int        @default(0) // Display ordering
+  isPublished Boolean    @default(false)
+  estimatedHours Float?  // Estimated time to complete
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  topics        Topic[]
+  prerequisiteFor ModulePrerequisite[] @relation("prerequisiteModule")
+  dependsOn       ModulePrerequisite[] @relation("dependentModule")
+
+  @@index([order])
+  @@map("modules")
+}
+
+// ─── MODULE PREREQUISITE ───────────────────────────────────────
+// Defines dependency graph between modules.
+// "To start Module B, you must complete Module A"
+
+model ModulePrerequisite {
+  id               String @id @default(cuid())
+
+  moduleId         String // The module that HAS the prerequisite
+  module           Module @relation("dependentModule", fields: [moduleId], references: [id], onDelete: Cascade)
+
+  prerequisiteId   String // The module that MUST be completed first
+  prerequisite     Module @relation("prerequisiteModule", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, prerequisiteId])
+  @@map("module_prerequisites")
+}
+
+// ─── TOPIC ─────────────────────────────────────────────────────
+// A topic within a module (e.g., "Variables & Data Types").
+// Contains lessons, quizzes, and challenges.
+
+model Topic {
+  id          String      @id @default(cuid())
+  slug        String      // URL-friendly within module
+  title       String
+  description String?
+  order       Int         @default(0) // Order within module
+  status      TopicStatus @default(DRAFT)
+  difficulty  Difficulty  @default(BEGINNER)
+  xpReward    Int         @default(100) // XP earned on completion
+
+  // Parent module
+  moduleId    String
+  module      Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  lessons     Lesson[]
+  quizzes     Quiz[]
+  challenges  Challenge[]
+  progress    Progress[]
+
+  @@unique([moduleId, slug])
+  @@index([moduleId, order])
+  @@map("topics")
+}
+
+// ─── LESSON ────────────────────────────────────────────────────
+// Individual lesson content page.
+// Composed of ordered LessonBlocks.
+
+model Lesson {
+  id          String   @id @default(cuid())
+  slug        String   // URL-friendly within topic
+  title       String
+  summary     String?  // Brief description shown in topic navigator
+  order       Int      @default(0) // Order within topic
+  isPublished Boolean  @default(false)
+  readTime    Int?     // Estimated read time in minutes
+
+  // Optional MDX content (alternative to blocks)
+  mdxContent  String?  // Raw MDX string for simple lessons
+
+  // Parent topic
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  blocks      LessonBlock[]
+  bookmarks   Bookmark[]
+  notes       Note[]
+
+  @@unique([topicId, slug])
+  @@index([topicId, order])
+  @@map("lessons")
+}
+
+// ─── LESSON BLOCK ──────────────────────────────────────────────
+// Individual content block within a lesson.
+// Flexible: text, code, images, videos, callouts, exercises.
+// Uses JSON metadata for type-specific data.
+
+model LessonBlock {
+  id       String          @id @default(cuid())
+  type     LessonBlockType
+  content  String          // Main content (text, code, URL, etc.)
+  order    Int             @default(0)
+  metadata Json?           // Type-specific: { language: "python", highlight: "3-5" }
+
+  // Parent lesson
+  lessonId String
+  lesson   Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId, order])
+  @@map("lesson_blocks")
+}
+
+// ─── QUIZ ──────────────────────────────────────────────────────
+// Quiz attached to a topic for knowledge testing.
+// Contains ordered questions.
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int      @default(0)
+  passingScore Int     @default(70) // Percentage needed to pass
+  timeLimit   Int?     // Time limit in seconds (null = no limit)
+  isPublished Boolean  @default(false)
+
+  // Parent topic
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+
+  @@index([topicId])
+  @@map("quizzes")
+}
+
+// ─── QUIZ QUESTION ─────────────────────────────────────────────
+// Individual question within a quiz.
+
+model QuizQuestion {
+  id           String       @id @default(cuid())
+  type         QuestionType
+  question     String       // The question text
+  explanation  String?      // Shown after answering (why correct/wrong)
+  order        Int          @default(0)
+  points       Int          @default(1) // Point value
+  codeSnippet  String?      // Optional code block shown with question
+
+  // Parent quiz
+  quizId       String
+  quiz         Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  // Relations
+  options      QuizOption[]
+
+  @@index([quizId, order])
+  @@map("quiz_questions")
+}
+
+// ─── QUIZ OPTION ───────────────────────────────────────────────
+// Answer option for a quiz question.
+
+model QuizOption {
+  id         String @id @default(cuid())
+  text       String
+  isCorrect  Boolean @default(false)
+  order      Int     @default(0)
+
+  // Parent question
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("quiz_options")
+}
+
+// ─── QUIZ ATTEMPT ──────────────────────────────────────────────
+// Records a user's quiz attempt with score and answers.
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  score       Int      // Percentage score (0-100)
+  passed      Boolean
+  totalPoints Int      // Total possible points
+  earnedPoints Int     // Points the user earned
+  answers     Json     // { questionId: selectedOptionId(s) }
+  timeTaken   Int?     // Seconds taken
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, quizId])
+  @@map("quiz_attempts")
+}
+
+// ─── CHALLENGE ─────────────────────────────────────────────────
+// Coding challenge attached to a topic.
+// Users write code, submit, and get feedback.
+
+model Challenge {
+  id              String     @id @default(cuid())
+  title           String
+  description     String     // Full challenge description (markdown)
+  difficulty      Difficulty @default(BEGINNER)
+  order           Int        @default(0)
+  starterCode     String?    // Pre-filled code in editor
+  solutionCode    String?    // Reference solution
+  testCases       Json?      // [{ input: "...", expectedOutput: "..." }]
+  hints           Json?      // ["hint1", "hint2", "hint3"]
+  xpReward        Int        @default(50)
+  language        String     @default("python")
+  isPublished     Boolean    @default(false)
+
+  // Parent topic
+  topicId         String
+  topic           Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  submissions     ChallengeSubmission[]
+
+  @@index([topicId])
+  @@map("challenges")
+}
+
+// ─── CHALLENGE SUBMISSION ──────────────────────────────────────
+// User's code submission for a challenge.
+
+model ChallengeSubmission {
+  id          String           @id @default(cuid())
+  code        String           // User's submitted code
+  status      SubmissionStatus @default(PENDING)
+  output      String?          // Execution output
+  testResults Json?            // [{ passed: true, input: "...", expected: "...", actual: "..." }]
+  timeTaken   Int?             // Seconds taken
+
+  // Relations
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  challengeId String
+  challenge   Challenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime         @default(now())
+
+  @@index([userId])
+  @@index([challengeId])
+  @@map("challenge_submissions")
+}
+
+// ─── PROGRESS ──────────────────────────────────────────────────
+// Tracks user's progress per topic.
+// One record per user per topic (unique constraint).
+
+model Progress {
+  id              String         @id @default(cuid())
+  status          ProgressStatus @default(NOT_STARTED)
+  completedAt     DateTime?      // When status changed to COMPLETED
+  score           Int?           // Overall topic score (0-100)
+  lessonsCompleted Int           @default(0)
+  totalLessons     Int           @default(0)
+  quizBestScore    Int?          // Best quiz score for this topic
+  timeSpent        Int           @default(0) // Total seconds spent
+
+  // Relations
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  topicId         String
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@map("progress")
+}
+
+// ─── ACHIEVEMENT ───────────────────────────────────────────────
+// Achievement/badge definitions.
+// Global — not tied to a specific user.
+
+model Achievement {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  title       String
+  description String
+  icon        String?             // Emoji or Lucide icon name
+  category    AchievementCategory
+  xpReward    Int                 @default(0)
+  criteria    Json?               // { type: "streak", value: 7 }
+  isSecret    Boolean             @default(false) // Hidden until earned
+
+  createdAt   DateTime            @default(now())
+
+  // Relations
+  users       UserAchievement[]
+
+  @@map("achievements")
+}
+
+// ─── USER ACHIEVEMENT ──────────────────────────────────────────
+// Junction table: which users earned which achievements.
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  earnedAt      DateTime    @default(now())
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// ─── USER STREAK ───────────────────────────────────────────────
+// Daily activity log. One row per user per day.
+// Used to calculate streaks and heatmaps.
+
+model UserStreak {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date // Just the date, no time
+  xpEarned  Int      @default(0) // XP earned on this day
+  minutes   Int      @default(0) // Minutes active
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("user_streaks")
+}
+
+// ─── BOOKMARK ──────────────────────────────────────────────────
+// User-saved lessons for quick access.
+
+model Bookmark {
+  id       String   @id @default(cuid())
+
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId String
+  lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+  @@map("bookmarks")
+}
+
+// ─── NOTE ──────────────────────────────────────────────────────
+// User notes attached to lessons.
+
+model Note {
+  id       String   @id @default(cuid())
+  content  String   // Markdown content
+  color    String?  // Note color label
+
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId String
+  lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, lessonId])
+  @@map("notes")
 }

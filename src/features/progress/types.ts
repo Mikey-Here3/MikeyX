@@ -1,1 +1,1 @@
-export type { UserProgress, StreakData } from "@/types/progress";
+export * from "@/types/progress";

@@ -1,1 +1,1 @@
-export type { Quiz, Flashcard, Difficulty } from "@/types/learning";
+export type { Quiz, Difficulty } from "@/types/learning";

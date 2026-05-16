@@ -126,6 +126,7 @@ exports.Prisma.UserScalarFieldEnum = {
   role: 'role',
   provider: 'provider',
   emailVerified: 'emailVerified',
+  bio: 'bio',
   xp: 'xp',
   level: 'level',
   streak: 'streak',
@@ -134,9 +135,211 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ModuleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  description: 'description',
+  icon: 'icon',
+  color: 'color',
+  difficulty: 'difficulty',
+  order: 'order',
+  isPublished: 'isPublished',
+  estimatedHours: 'estimatedHours',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ModulePrerequisiteScalarFieldEnum = {
+  id: 'id',
+  moduleId: 'moduleId',
+  prerequisiteId: 'prerequisiteId'
+};
+
+exports.Prisma.TopicScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  description: 'description',
+  order: 'order',
+  status: 'status',
+  difficulty: 'difficulty',
+  xpReward: 'xpReward',
+  moduleId: 'moduleId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LessonScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  summary: 'summary',
+  order: 'order',
+  isPublished: 'isPublished',
+  readTime: 'readTime',
+  mdxContent: 'mdxContent',
+  topicId: 'topicId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LessonBlockScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  content: 'content',
+  order: 'order',
+  metadata: 'metadata',
+  lessonId: 'lessonId'
+};
+
+exports.Prisma.QuizScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  order: 'order',
+  passingScore: 'passingScore',
+  timeLimit: 'timeLimit',
+  isPublished: 'isPublished',
+  topicId: 'topicId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.QuizQuestionScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  question: 'question',
+  explanation: 'explanation',
+  order: 'order',
+  points: 'points',
+  codeSnippet: 'codeSnippet',
+  quizId: 'quizId'
+};
+
+exports.Prisma.QuizOptionScalarFieldEnum = {
+  id: 'id',
+  text: 'text',
+  isCorrect: 'isCorrect',
+  order: 'order',
+  questionId: 'questionId'
+};
+
+exports.Prisma.QuizAttemptScalarFieldEnum = {
+  id: 'id',
+  score: 'score',
+  passed: 'passed',
+  totalPoints: 'totalPoints',
+  earnedPoints: 'earnedPoints',
+  answers: 'answers',
+  timeTaken: 'timeTaken',
+  userId: 'userId',
+  quizId: 'quizId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ChallengeScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  difficulty: 'difficulty',
+  order: 'order',
+  starterCode: 'starterCode',
+  solutionCode: 'solutionCode',
+  testCases: 'testCases',
+  hints: 'hints',
+  xpReward: 'xpReward',
+  language: 'language',
+  isPublished: 'isPublished',
+  topicId: 'topicId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ChallengeSubmissionScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  status: 'status',
+  output: 'output',
+  testResults: 'testResults',
+  timeTaken: 'timeTaken',
+  userId: 'userId',
+  challengeId: 'challengeId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ProgressScalarFieldEnum = {
+  id: 'id',
+  status: 'status',
+  completedAt: 'completedAt',
+  score: 'score',
+  lessonsCompleted: 'lessonsCompleted',
+  totalLessons: 'totalLessons',
+  quizBestScore: 'quizBestScore',
+  timeSpent: 'timeSpent',
+  userId: 'userId',
+  topicId: 'topicId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AchievementScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  description: 'description',
+  icon: 'icon',
+  category: 'category',
+  xpReward: 'xpReward',
+  criteria: 'criteria',
+  isSecret: 'isSecret',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserAchievementScalarFieldEnum = {
+  id: 'id',
+  earnedAt: 'earnedAt',
+  userId: 'userId',
+  achievementId: 'achievementId'
+};
+
+exports.Prisma.UserStreakScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  xpEarned: 'xpEarned',
+  minutes: 'minutes',
+  userId: 'userId'
+};
+
+exports.Prisma.BookmarkScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  lessonId: 'lessonId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.NoteScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  color: 'color',
+  userId: 'userId',
+  lessonId: 'lessonId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -148,14 +351,86 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',
   ADMIN: 'ADMIN',
   MODERATOR: 'MODERATOR'
 };
 
+exports.Difficulty = exports.$Enums.Difficulty = {
+  BEGINNER: 'BEGINNER',
+  INTERMEDIATE: 'INTERMEDIATE',
+  ADVANCED: 'ADVANCED'
+};
+
+exports.TopicStatus = exports.$Enums.TopicStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.LessonBlockType = exports.$Enums.LessonBlockType = {
+  TEXT: 'TEXT',
+  CODE: 'CODE',
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
+  CALLOUT: 'CALLOUT',
+  EXERCISE: 'EXERCISE'
+};
+
+exports.QuestionType = exports.$Enums.QuestionType = {
+  SINGLE_CHOICE: 'SINGLE_CHOICE',
+  MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
+  TRUE_FALSE: 'TRUE_FALSE',
+  CODE_OUTPUT: 'CODE_OUTPUT'
+};
+
+exports.SubmissionStatus = exports.$Enums.SubmissionStatus = {
+  PENDING: 'PENDING',
+  PASSED: 'PASSED',
+  FAILED: 'FAILED'
+};
+
+exports.ProgressStatus = exports.$Enums.ProgressStatus = {
+  NOT_STARTED: 'NOT_STARTED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  MASTERED: 'MASTERED'
+};
+
+exports.AchievementCategory = exports.$Enums.AchievementCategory = {
+  STREAK: 'STREAK',
+  COMPLETION: 'COMPLETION',
+  MASTERY: 'MASTERY',
+  SOCIAL: 'SOCIAL',
+  SPECIAL: 'SPECIAL'
+};
+
 exports.Prisma.ModelName = {
-  User: 'User'
+  User: 'User',
+  Module: 'Module',
+  ModulePrerequisite: 'ModulePrerequisite',
+  Topic: 'Topic',
+  Lesson: 'Lesson',
+  LessonBlock: 'LessonBlock',
+  Quiz: 'Quiz',
+  QuizQuestion: 'QuizQuestion',
+  QuizOption: 'QuizOption',
+  QuizAttempt: 'QuizAttempt',
+  Challenge: 'Challenge',
+  ChallengeSubmission: 'ChallengeSubmission',
+  Progress: 'Progress',
+  Achievement: 'Achievement',
+  UserAchievement: 'UserAchievement',
+  UserStreak: 'UserStreak',
+  Bookmark: 'Bookmark',
+  Note: 'Note'
 };
 
 /**
