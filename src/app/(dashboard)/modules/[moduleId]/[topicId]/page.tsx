@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 import { LessonContent } from "@/components/learning/lesson-content";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Code2, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { getTopicWithLessons } from "@/server/actions/learning-actions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CodeEditor } from "@/components/learning/code-editor";
+import { QuizWidget, QuizData } from "@/components/learning/quiz-widget";
 
 interface TopicPageProps {
   params: Promise<{
@@ -22,8 +25,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
   const resolvedParams = await params;
   const topicData = await getTopicWithLessons(resolvedParams.moduleId, resolvedParams.topicId);
 
-  // For Phase 4, we just use the first lesson block from the database.
-  // In a real implementation, a topic has multiple lessons and blocks.
+  // For Phase 5, we use the first lesson block from the database.
   const lesson = topicData.lessons[0];
   const block = lesson?.blocks[0];
 
@@ -32,10 +34,33 @@ export default async function TopicPage({ params }: TopicPageProps) {
   // Dummy progress
   const progress = 0;
 
+  // Mock quiz data for Phase 5 demo
+  const sampleQuiz: QuizData = {
+    question: "Which keyword should you use to declare a variable whose value will not change?",
+    options: [
+      { id: "o1", text: "let" },
+      { id: "o2", text: "var" },
+      { id: "o3", text: "const" },
+      { id: "o4", text: "static" },
+    ],
+    correctOptionId: "o3",
+    explanation: "The 'const' keyword is used to declare variables that cannot be reassigned.",
+  };
+
+  const sampleCode = `// Try changing the value of this variable!
+let message = "Hello from MikeyX!";
+console.log(message);
+
+// What happens if we do a math operation?
+let score = 10;
+score = score * 5;
+console.log("Your score is:", score);
+`;
+
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full max-w-7xl mx-auto">
       {/* Left Column: Lesson Content */}
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-[calc(100vh-8rem)]">
         <div className="flex items-center gap-4 mb-6">
           <Link href={`/modules/${resolvedParams.moduleId}`} className="inline-flex items-center justify-center rounded-md border border-input bg-transparent h-9 w-9 hover:bg-accent hover:text-accent-foreground">
             <ArrowLeft className="h-4 w-4" />
@@ -55,7 +80,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
           <LessonContent source={content} />
         </div>
 
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-6 shrink-0">
           <Button variant="ghost">Previous Lesson</Button>
           <Button className="gap-2">
             Complete & Continue <ArrowRight className="h-4 w-4" />
@@ -63,25 +88,28 @@ export default async function TopicPage({ params }: TopicPageProps) {
         </div>
       </div>
 
-      {/* Right Column: Interactive Area (Placeholder for Editor/Quiz) */}
-      <div className="hidden lg:flex w-[400px] xl:w-[500px] flex-col gap-6">
-        <div className="flex-1 border rounded-xl bg-card overflow-hidden flex flex-col">
-          <div className="bg-muted p-3 border-b flex items-center justify-between">
-            <span className="font-semibold text-sm flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              Quick Check
-            </span>
-          </div>
-          <div className="p-6 flex flex-col justify-center flex-1 items-center text-center">
-            <h3 className="font-medium text-lg mb-2">Ready to test your knowledge?</h3>
-            <p className="text-muted-foreground text-sm mb-6">
-              Complete the reading on the left, then take a quick quiz to earn XP.
-            </p>
-            <Button variant="secondary" className="w-full">
-              Start Quiz
-            </Button>
-          </div>
-        </div>
+      {/* Right Column: Interactive Area (Tabs) */}
+      <div className="hidden lg:flex w-[400px] xl:w-[500px] flex-col h-[calc(100vh-8rem)]">
+        <Tabs defaultValue="editor" className="flex flex-col h-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="editor" className="gap-2">
+              <Code2 className="w-4 h-4" />
+              Code Editor
+            </TabsTrigger>
+            <TabsTrigger value="quiz" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              Knowledge Check
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="editor" className="flex-1 mt-0 outline-none">
+            <CodeEditor initialCode={sampleCode} />
+          </TabsContent>
+          
+          <TabsContent value="quiz" className="flex-1 mt-0 outline-none">
+            <QuizWidget quiz={sampleQuiz} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
